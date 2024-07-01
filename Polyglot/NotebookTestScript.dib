@@ -1,0 +1,427 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"name":"csharp"}]}}
+
+#!markdown
+
+# Verify execution count.
+
+The next code cell should have empty square brackets on the left, e.g., "`[ ]`".  Execute the cell and upon completion there should be a number there; probably "`[1]`".  Execute the cell again and verify that the number in the brackets increments by one, e.g., "`[2]`".
+
+#!csharp
+
+1+1
+
+#!markdown
+
+# Execute the following cell.
+
+You'll notice a counter that appears and starts incrementing.  After a second or two, stop the cell.  Your output should look similar to:
+
+```
+5
+Command cancelled
+```
+
+N.b., the old values (e.g., `1`, `2`, `3`, `4`, etc.) should no longer be displayed, but overwritten.
+
+#!csharp
+
+using System.Threading.Tasks;
+using Microsoft.DotNet.Interactive;
+
+var output = string.Empty.Display("text/plain");
+var counter = 1;
+while (!KernelInvocationContext.Current.CancellationToken.IsCancellationRequested)
+{
+    await Task.Delay(500, KernelInvocationContext.Current.CancellationToken);
+    output.Update($"{counter++}");
+}
+
+#!markdown
+
+# Execute the next two cells.
+
+#!csharp
+
+var x = 123;
+
+#!html
+
+<div id="output">The value is not yet set.</div>
+
+#!markdown
+
+# Execute the next two cells.  After execution, the output immediately above each should read:
+
+```
+The value is 123.
+```
+
+And the output below the next cell should display the same value.
+
+#!javascript
+
+#!share --from csharp x
+document.getElementById("output").innerText = `The value is ${x}.`;
+console.log(`The value is ${x}.`);
+
+#!javascript
+
+#!set --value @csharp:x --name y
+document.getElementById("output").innerText = `The value is ${y}.`;
+console.log(`The value is ${y}.`);
+
+#!markdown
+
+# Execute the next cell. After execution, the output immediately below should be:
+
+```
+javascript
+```
+
+#!javascript
+
+const jsKernel = kernel.root.findKernelByName('javascript');
+console.log(jsKernel.name);
+
+#!markdown
+
+# Execute the next cell. After execution, the output immediately below should be:
+
+```
+[".NET","csharp","fsharp","html","javascript","kql","mermaid","pwsh","sql","value","vscode","webview"]
+```
+
+#!javascript
+
+kernels = Array.from(kernel.root.findKernels(s => true).map(k => k.name)).sort();
+return kernels;
+
+#!markdown
+
+# Execute the next cell. After execution, the output immediately below should be:
+
+```
+1234
+```
+
+And the `POLYGLOT NOTEBOOK: VARIABLES` window should contain a variable with name `asdf`, value `1234` and kernel Name `csharp`
+
+#!javascript
+
+await kernel.root.send({ commandType: 'SubmitCode', command: { code: 'var csharpVarFromJs = 1234; Console.WriteLine(csharpVarFromJs);', targetKernelName: 'csharp' } });
+
+#!markdown
+
+# Execute the next cell, the output should be displayed as HTML like so:
+
+| Name | Salary |
+ :---|---: |
+| Developer | 42 |
+
+change the renderer using the `...` element, choose the json and the output should look like so:
+
+``` json
+{"Name":"Developer","Salary":42}
+```
+
+#!csharp
+
+var value = new { Name = "Developer", Salary = 42 };
+value.Display("application/json", "text/html");
+
+#!markdown
+
+# Execute the next cell, the output should be displayed like so:
+
+31.1
+
+#!csharp
+
+10m + 21.1m
+
+#!markdown
+
+# Execute the next cell. It should fail with the message:
+```
+Error: Value 'undefinedVariableName' not found in kernel pwsh
+2
+```
+
+#!csharp
+
+#!share --from pwsh undefinedVariableName
+
+1+1
+
+#!markdown
+
+# Execute the next cell and verify the following error appears:
+
+```
+input.fsx (1,11)-(1,12) parse error Unexpected token '+' or incomplete expression
+```
+
+#!fsharp
+
+let x = 1 +
+
+#!markdown
+
+# Complex console output
+
+#!markdown
+
+The output should look like:
+
+<span style="color:#00FF00">this is green</span>
+
+this is white
+
+<span style="color:#FF0000">this is red</span>
+
+#!csharp
+
+Console.Write("\x1b[38;2;0;255;0m");
+Console.WriteLine("this is green");
+Console.Write("\x1b[0m");
+"this is white".Display();
+Console.Error.Write("\x1b[38;2;255;0;0m");
+Console.Error.WriteLine("this is red");
+Console.Error.Write("\x1b[0m");
+
+#!markdown
+
+# vscode kernel and user input prompts
+This cell should prompt the user for input. Type something into the input field. Whatever you typed should be displayed in the output.
+
+#!csharp
+
+var input = await Microsoft.DotNet.Interactive.Kernel.GetInputAsync("give me data");
+input
+
+#!fsharp
+
+let input = task  {
+                    return! Microsoft.DotNet.Interactive.Kernel.GetInputAsync ("give me data")
+                  } 
+input.Result
+
+#!markdown
+
+This should prompt you for input.
+
+#!value
+
+#!value --from-value @input:wat --name value_from_input
+
+#!markdown
+
+This should output the thing you typed into the prompt.
+
+#!fsharp
+
+#!share --from value value_from_input
+value_from_input
+
+#!markdown
+
+Now check the variable explorer. Is the value there in the `value` kernel?
+
+#!markdown
+
+This should prompt you for input. Type something into the input field. Whatever you typed should be displayed in the output.
+
+#!csharp
+
+#!set --name csharpVarFromInput --value @input:"Please enter a value"
+csharpVarFromInput
+
+#!markdown
+
+# Run mermaid markdown:
+Execute the markadown in the cell, this should produce a graphic visualization.
+
+#!mermaid
+
+mindmap
+  root((.NET Interactive))
+    Commands
+        SubmitCode
+        Cancel
+        SendValue
+    Events
+        CommandSucceeded
+        CommandFailed
+        ValueProduced
+    Kernels
+        Kernel
+        CompositeKernel
+        ProxyKernel
+    Directives
+        Connect
+            SQL
+            KQL
+            Jupyter
+
+#!markdown
+
+# Check this manual scenario:
+
+1. `Ctrl+Shift+P` => "Polyglot Notebook: Create new blank notebook"
+2. Select "Create as .dib"
+3. Select "F#"
+4. You should have a new empty notebook named something like "Untitled-1.dib" with a single cell of type "F# (Polyglot Notebook)".
+5. Set the cell contents to `1+1` and execute.
+6. Verify output of `2`.
+7. Save to disk.
+8. Open that file in notepad.
+9. The contents should look like this:
+
+   ```
+   #!meta
+      {"kernelInfo":{"defaultKernelName":"fsharp","items":[{"name":"fsharp","languageName":"F#","aliases":["f#","F#"]},{"name":"vscode","aliases":["frontend"]}]}}
+
+   #!fsharp
+
+   1+1
+   ```
+
+#!markdown
+
+# Execute the above scenario again with the following changes:
+
+2. Select "Create as .ipynb"
+4. File should be named something like "Untitled-1.ipynb".
+
+(new steps)
+
+9. The contents should look like this:
+
+``` json
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "dotnet_interactive": {
+     "language": "fsharp"
+    },
+    "polyglot_notebook": {
+     "kernelName": "fsharp"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div class=\"dni-plaintext\"><pre>2</pre></div><style>\r\n",
+       ".dni-code-hint {\r\n",
+       "    font-style: italic;\r\n",
+       "    overflow: hidden;\r\n",
+       "    white-space: nowrap;\r\n",
+       "}\r\n",
+       ".dni-treeview {\r\n",
+       "    white-space: nowrap;\r\n",
+       "}\r\n",
+       ".dni-treeview td {\r\n",
+       "    vertical-align: top;\r\n",
+       "    text-align: start;\r\n",
+       "}\r\n",
+       "details.dni-treeview {\r\n",
+       "    padding-left: 1em;\r\n",
+       "}\r\n",
+       "table td {\r\n",
+       "    text-align: start;\r\n",
+       "}\r\n",
+       "table tr { \r\n",
+       "    vertical-align: top; \r\n",
+       "    margin: 0em 0px;\r\n",
+       "}\r\n",
+       "table tr td pre \r\n",
+       "{ \r\n",
+       "    vertical-align: top !important; \r\n",
+       "    margin: 0em 0px !important;\r\n",
+       "} \r\n",
+       "table th {\r\n",
+       "    text-align: start;\r\n",
+       "}\r\n",
+       "</style>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "1+1"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": ".NET (F#)",
+   "language": "F#",
+   "name": ".net-fsharp"
+  },
+  "polyglot_notebook": {
+   "kernelInfo": {
+    "defaultKernelName": "fsharp",
+    "items": [
+     {
+      "aliases": [
+       "f#",
+       "F#"
+      ],
+      "languageName": "F#",
+      "name": "fsharp"
+     },
+     {
+      "aliases": [
+       "frontend"
+      ],
+      "languageName": null,
+      "name": "vscode"
+     }
+    ]
+   }
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
+```
+
+#!markdown
+
+# Open the two previously saved notebooks via the following:
+
+1. `Ctrl+Shift+P` => "Polyglot Notebook: Open notebook"
+2. Select the "Untitled-1.dib"/"Untitled-1.ipynb" from before.
+3. Verify that it contains a single F# cell with the contents "1+1" and that it can execute.
+
+#!markdown
+
+# Test adding cell to notebook (VSCode only)
+
+#!csharp
+
+using Microsoft.DotNet.Interactive;
+using Microsoft.DotNet.Interactive.Commands;
+
+var _ = Kernel.Root.SendAsync(new SendEditableCode("fsharp","#!share --from csharp x\nx"));
+
+#!markdown
+
+The code below will add 2 markdown cells
+
+#!csharp
+
+using Microsoft.DotNet.Interactive;
+using Microsoft.DotNet.Interactive.Commands;
+
+for(var i = 0; i<2;i++){
+    var _ = await Kernel.Root.SendAsync(new SendEditableCode("markdown",$"# markdown cell {i}"));
+}   
