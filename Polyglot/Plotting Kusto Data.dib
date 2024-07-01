@@ -1,0 +1,90 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"name":"csharp"},{"aliases":[],"languageName":"KQL","name":"kql-MyKusto"}]}}
+
+#!markdown
+
+# Plotting Kusto Data
+
+An exploration into graphing data from a kusto query
+
+#!markdown
+
+## Init
+
+These are the steps required to get the system up and running
+
+1. Load dependencies from nuget or from local source
+2. Initialize connections
+3. Set up any data
+
+#!csharp
+
+#r "nuget: XPlot.Plotly.Interactive, 4.0.6"
+
+#!csharp
+
+#r "nuget: Microsoft.DotNet.Interactive.Kql, *-*"
+
+#!csharp
+
+#load "KqlDataAdapter.csx"
+
+#!csharp
+
+#!connect kql --kernel-name MyKusto --cluster "https://kvcw4hhzytu7kpbdrmpmfy.southcentralus.kusto.windows.net/" --database "MyDatabase"
+
+#!csharp
+
+using XPlot.Plotly;
+
+#!kql-MyKusto
+
+#!kql-MyKusto --name scatterData
+let T1 = datatable (x:int, y:int) [
+    1, 10,
+    2, 15,
+    3, 13,
+    4, 17,
+];
+let T2 = datatable (x:int, y:int) [
+    2, 16,
+    3, 5,
+    4, 11,
+    5, 9,
+];
+T1 | as ['Table1'];
+T2 | as ['Table2'];
+
+#!markdown
+
+## Code
+
+Now we're into the good stuff.  This example loads two tables from a kusto variable and plots them as a scatter chart
+
+#!csharp
+
+#!set --value @kql-MyKusto:scatterData --name scatterData
+
+
+var adapter = new KqlDataAdapter(scatterData);
+adapter.Source.Display();
+adapter.GetColumnValues<int>("x").Display();
+
+var chart = Chart.Plot(new[] {
+    new Scatter
+    {
+        name = "Open",
+        x = adapter.GetColumnValues<int>("x", 0),
+        y = adapter.GetColumnValues<int>("y", 0)
+    },
+
+    new Scatter
+    {
+        name = "Close",
+        x = adapter.GetColumnValues<int>("x", 1),
+        y = adapter.GetColumnValues<int>("y", 1)
+    },
+});
+chart.WithTitle("Aww Yeah");
+chart.Display();
